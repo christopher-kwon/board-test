@@ -20,5 +20,5 @@ insert into member
 values('admin', '1234', '관리자', 99, '남', 'admin@admin.com');
 
 
-
+select count(*) from member
 

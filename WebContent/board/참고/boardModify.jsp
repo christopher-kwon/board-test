@@ -16,7 +16,7 @@
 <body>
 <%-- 게시판 수정 --%>
 <div class="container">
-<form action="BoardModifyAction.bo" method="post"  name="modifyform">
+<form action="BoardModifyAction.bo" method="post"  enctype="multipart/form-data" name="modifyform">
 <input type="hidden" name="board_num" value="${boarddata.board_num}">
 
 <h1>MVC 게시판-수정 페이지</h1>

@@ -386,22 +386,25 @@ public class BoardDAO {
 
 	}
 
-	public int boardModify(BoardBean board) {
+	public boolean boardModify(BoardBean board) {
 		Connection conn = null;
 		PreparedStatement pstmt = null;
-		int result = 0;
+		String sql = "update board set board_subject = ?, board_content = ?, board_file = ? where board_num = ?";
 
 		try {
 			conn = ds.getConnection();
 
-			String sql = "update board set board_subject = ?, board_content = ?, board_pass = ? where board_num = ?";
-
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, board.getBoard_subject());
 			pstmt.setString(2, board.getBoard_content());
-			pstmt.setString(3, board.getBoard_pass());
+			pstmt.setString(3, board.getBoard_file());
 			pstmt.setInt(4, board.getBoard_num());
-			result = pstmt.executeUpdate();
+			int result = pstmt.executeUpdate();
+
+			if (result == 1) {
+				System.out.println("성공 업데이트");
+				return true;
+			}
 
 		} catch (SQLException ex) {
 			ex.printStackTrace();
@@ -424,7 +427,123 @@ public class BoardDAO {
 				}
 		}
 
-		return result;
+		return true;
+
+	}
+
+	public boolean isBoardWriter(int num, String pass) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		boolean result = false;
+		String sql = "SELECT board_pass FROM board WHERE board_num = ?";
+
+		try {
+			conn = ds.getConnection();
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, num);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				if (rs.getString(1).equals(pass)) {
+					result = true; // 글번호와 비밀번호 일치
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("isBoardWriter() 에러 : " + e);
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+
+			} catch (Exception xe) {
+				xe.printStackTrace();
+
+			}
+			try {
+				if (pstmt != null)
+					pstmt.close();
+			} catch (Exception se) {
+				se.printStackTrace();
+			}
+			try {
+				if (conn != null)
+					conn.close(); // 4단계 : DB 연결을 끊는다.
+			} catch (Exception qe) {
+				qe.printStackTrace();
+
+			}
+
+		}
+		return result; // 비밀번호 불일치
+
+	}
+
+	public boolean boardDelete(int num) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmt2 = null;
+		ResultSet rs = null;
+		String select_sql = "select board_re_ref, board_re_lev, board_re_seq from board where board_num = ?";
+
+		String board_delete_sql = "delete from board where board_re_ref = ? and board_re_lev >= ? "
+				+ "and board_re_seq >= ? and board_re_seq <= (nvl((select min(board_re_seq)-1 from board "
+				+ "where board_re_ref = ? and board_re_lev = ? and board_re_seq > ?), (select max(board_re_seq) "
+				+ "from board where board_re_ref = ?)))";
+
+		boolean result_check = false;
+
+		try {
+			conn = ds.getConnection();
+			pstmt = conn.prepareStatement(select_sql);
+			pstmt.setInt(1, num);
+			rs = pstmt.executeQuery();
+
+			if (rs.next()) {
+				pstmt2 = conn.prepareStatement(board_delete_sql);
+				pstmt2.setInt(1, rs.getInt("board_re_ref"));
+				pstmt2.setInt(2, rs.getInt("board_re_lev"));
+				pstmt2.setInt(3, rs.getInt("board_re_seq"));
+				pstmt2.setInt(4, rs.getInt("board_re_ref"));
+				pstmt2.setInt(5, rs.getInt("board_re_lev"));
+				pstmt2.setInt(6, rs.getInt("board_re_seq"));
+				pstmt2.setInt(7, rs.getInt("board_re_ref"));
+
+				int count = pstmt2.executeUpdate();
+
+				if (count >= 1)
+					result_check = true; // 삭제 안된 경우에는 false를 반환합니다.
+			}
+
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			System.out.println("boardDelete() 에러 : " + ex);
+
+		} finally {
+			if (rs != null)
+				try {
+					rs.close();
+
+				} catch (SQLException ex) {
+					ex.printStackTrace();
+				}
+			if (pstmt != null)
+				try {
+					pstmt.close();
+
+				} catch (SQLException ex) {
+					ex.printStackTrace();
+				}
+			if (conn != null)
+				try {
+					conn.close();
+				} catch (SQLException ex) {
+					ex.printStackTrace();
+				}
+		}
+
+		return result_check;
 
 	}
 
