@@ -5,11 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
-
 
 public class MemberDAO {
 
@@ -225,37 +225,39 @@ public class MemberDAO {
 		return result;
 	}
 
-	public ArrayList<Member> selectAll() {
+	public List<Member> getList(int page, int limit) {
 
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		ArrayList<Member> list = null;
+		List<Member> list = new ArrayList<Member>();
 
 		try {
 
 			conn = ds.getConnection();
 
-			String select_sql = "SELECT * from member";
+			String select_sql = "SELECT * from (select b.*, rownum rnum from (select * from member where id != 'admin' order by id) b) where rnum >= ? and rnum <=?";
 
 			pstmt = conn.prepareStatement(select_sql);
+			// 한 페이지당 10개씩 목록인 경우 1페이지, 2페이지, 3페이지, 4페이지...
+			int startrow = (page - 1) * limit + 1;
+			// 읽기 시작할 row 번호(1, 11, 21, 31 ...)
+			int endrow = startrow + limit - 1;
 
+			pstmt.setInt(1, startrow);
+			pstmt.setInt(2, endrow);
 			rs = pstmt.executeQuery();
 
-			int i = 0;
 			while (rs.next()) { // 더 이상 읽을 데이터가 없을 때까지 반복
-				if (i++ == 0) {
-					list = new ArrayList<Member>();
-				}
-				Member member = new Member();
+				Member m = new Member();
 
-				member.setId(rs.getString(1));
-				member.setPassword(rs.getString(2));
-				member.setName(rs.getString(3));
-				member.setAge(rs.getInt(4));
-				member.setGender(rs.getString(5));
-				member.setEmail(rs.getString(6));
-				list.add(member);
+				m.setId(rs.getString(1));
+				m.setPassword(rs.getString(2));
+				m.setName(rs.getString(3));
+				m.setAge(rs.getInt(4));
+				m.setGender(rs.getString(5));
+				m.setEmail(rs.getString(6));
+				list.add(m);
 			}
 
 		} catch (Exception e) {
@@ -288,6 +290,128 @@ public class MemberDAO {
 		return list;
 	}
 	
+	public List<Member> getList(String field, String value, int page, int limit) {
+
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<Member> list = new ArrayList<Member>();
+
+		try {
+
+			conn = ds.getConnection();
+
+			String sql = "select * from (select b.*, rownum rnum from (select * from member where id != "
+					+ "'admin' and " + field + " like ? order by id) b) where rnum >= ? and rnum <=?";
+
+			System.out.println(sql);
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, "%"+value+"%");
+
+			
+			int startrow = (page - 1) * limit + 1;
+			// 읽기 시작할 row 번호(1, 11, 21, 31 ...)
+			int endrow = startrow + limit - 1;
+
+			pstmt.setInt(2, startrow);
+			pstmt.setInt(3, endrow);
+
+			rs = pstmt.executeQuery();
+
+			while (rs.next()) { // 더 이상 읽을 데이터가 없을 때까지 반복
+				Member m = new Member();
+
+				m.setId(rs.getString(1));
+				m.setPassword(rs.getString(2));
+				m.setName(rs.getString(3));
+				m.setAge(rs.getInt(4));
+				m.setGender(rs.getString(5));
+				m.setEmail(rs.getString(6));
+				list.add(m);
+			}
+			System.out.println(list.size());
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+
+			} catch (Exception xe) {
+				xe.printStackTrace();
+
+			}
+			try {
+				if (pstmt != null)
+					pstmt.close();
+			} catch (Exception se) {
+				se.printStackTrace();
+			}
+			try {
+				if (conn != null)
+					conn.close(); // 4단계 : DB 연결을 끊는다.
+			} catch (Exception qe) {
+				qe.printStackTrace();
+
+			}
+
+		}
+
+		return list;
+	}
+	
+
+	public int getListCount(String field, String value) {
+
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		int x = 0;
+		try {
+
+			conn = ds.getConnection();
+
+			String sql = "select count(*) from member where id != 'admin' and " + field + " like ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, "%"+value+"%");
+			
+			rs = pstmt.executeQuery();
+
+			if (rs.next()) { // 더 이상 읽을 데이터가 없을 때까지 반복
+				x = rs.getInt(1);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+
+			} catch (Exception xe) {
+				xe.printStackTrace();
+
+			}
+			try {
+				if (pstmt != null)
+					pstmt.close();
+			} catch (Exception se) {
+				se.printStackTrace();
+			}
+			try {
+				if (conn != null)
+					conn.close(); // 4단계 : DB 연결을 끊는다.
+			} catch (Exception qe) {
+				qe.printStackTrace();
+
+			}
+
+		}
+
+		return x;
+	}
+
 	public int getListCount() {
 		Connection conn = null;
 		PreparedStatement pstmt = null;
@@ -295,13 +419,14 @@ public class MemberDAO {
 		int x = 0;
 		try {
 			conn = ds.getConnection();
-			pstmt = conn.prepareStatement("select count(*) from member");
+			pstmt = conn.prepareStatement("select count(*) from member where id != 'admin'");
 			rs = pstmt.executeQuery();
 
 			if (rs.next()) {
 				x = rs.getInt(1);
 			}
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			System.out.println("getListCount() 에러 : " + ex);
 		} finally {
 			if (rs != null)
@@ -326,7 +451,44 @@ public class MemberDAO {
 		}
 		return x;
 	}
-	
-	
+
+	public int delete(String id) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		int result = 0;
+
+		try {
+			conn = ds.getConnection();
+			String sql = "delete from member where id = ?";
+
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, id);
+
+			result = pstmt.executeUpdate();
+
+		} catch (SQLIntegrityConstraintViolationException e) {
+			result = -1;
+			System.out.println("삭제에 실패하였습니다. ");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (pstmt != null)
+				try {
+					pstmt.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			if (conn != null)
+				try {
+					conn.close(); // 4단계 : DB 연결을 끊는다.
+				} catch (Exception qe) {
+					qe.printStackTrace();
+				}
+
+		}
+
+		return result;
+	}
 
 }

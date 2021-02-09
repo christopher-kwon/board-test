@@ -44,7 +44,7 @@ tbody > tr:nth-child(2) > td:nth-child(1)
 <td><div>첨부파일</div></td>
 <c:if test="${!empty boarddata.board_file }"><%--파일첨부한 경우 --%>
 <td><img src="image/down.png" width="10px">
-<a href="BoardFileDown.bo?=filename=${boarddata.board_file }">${boarddata.board_file }</a></td>
+<a href="BoardFileDown.bo?filename=${boarddata.board_file }">${boarddata.board_file }</a></td>
 </c:if>
 <c:if test="${empty boarddata.board_file }"> <%-- 파일 첨부하지 않은 경우 --%>
 <td></td>
