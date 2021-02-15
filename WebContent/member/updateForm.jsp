@@ -15,13 +15,16 @@
 <style>
 h3{
 text-align:center; color:#1a92b9;}
+input[type=file]{
+display:none;
+}
 </style>
 </head>
 <body>
 
 <jsp:include page="../board/참고/header.jsp"/>
 
-<form name="updateform" action="updateProcess.net" method="post">
+<form name="updateform" action="updateProcess.net" method="post" enctype="multipart/form-data">
 <h1>회원 정보 수정</h1>
 <hr>
 <b>아이디</b>
@@ -32,10 +35,10 @@ text-align:center; color:#1a92b9;}
 <input type="password" name="pass" value=${memberinfo.password } readOnly>
 
 <b>이름</b>
-<input type="text" name="name" value=${memberinfo.name }  maxLength="15" required>
+<input type="text" name="name" value=${memberinfo.name }  placeholder="Enter name" maxLength="15" required>
 
 <b>나이</b>
-<input type="text" name="age" value=${memberinfo.age } maxLength="2" required>
+<input type="text" name="age" value=${memberinfo.age } placeholder="Enter age" maxLength="2" required>
 
 <b>성별</b>
 <div>
@@ -48,8 +51,25 @@ text-align:center; color:#1a92b9;}
 <b>이메일 주소</b>
 <input type="text" name="email" value=${memberinfo.email } >
 <span id="email_message"></span>
+
+
+<b>프로필 사진</b>
+<label>
+<img src="image/attach.png" width="10px">
+<span id="filename">${memberinfo.memberfile }</span>
+<span id="showImage">
+<c:if test='${empty memberinfo.memberfile }'>
+<c:set var='src' value='image/profile.png'/>
+</c:if>
+<c:if test='${!empty memberinfo.memberfile }'>
+<c:set var='src' value='${"memberupload/"}${memberinfo.memberfile}'/>
+</c:if>
+<img src="${src}" width="20px" alt="profile">
+</span>
+<input type="file" name="memberfile" accept="image/*">
+</label>
 <div class="clearfix">
-<button type="submit" class="submitbtn">정보수정</button>
+<button type="submit" class="submitbtn">수정</button>
 <button type="button" class="cancelbtn">취소</button>
 </div>
 
@@ -101,7 +121,30 @@ $("input:eq(6)").on('keyup',
 		}
 		
 	});
-		
+	
+	$('input[type=file]').change(function(event) {
+		var inputfile = $(this).val().split('\\');
+		var filename = inputfile[inputfile.length - 1];
+		var pattern = /(gif|jpg|jpeg|png)$/i;
+		if(pattern.test(filename)) {
+			$('#filename').text(filename); //inputfile.length - 1 = 2
+			var reader = new FileReader(); //파일을 읽기 위한 개체 생성
+			
+			//DataURL 형식으로 파일을 읽어옵니다.
+			//읽어온 결과는 reader 개체의 result 속성에 저장됩니다.
+			//event.target.files[0] : 선택한 그림의 파일개체에서 첫번째 개체를 가져옵니다.
+			
+			reader.readAsDataURL(event.target.files[0]);
+			
+			reader.onload = function(event) { //읽기에 성공했을 때 실행되는 이벤트 핸들러
+				$('#showImage').html('<img width="20px" src="' + event.target.result +'">');
+			};
+		} else {
+			alert('확장자는 gif, jpg, jpeg, png가 가능합니다.');
+		}
+			
+		});
+
 		
 </script>
 

@@ -150,6 +150,8 @@ public class MemberDAO {
 				m.setAge(rs.getInt(4));
 				m.setGender(rs.getString(5));
 				m.setEmail(rs.getString(6));
+				m.setMemberfile(rs.getString(7));
+
 			}
 
 		} catch (Exception e) {
@@ -189,14 +191,16 @@ public class MemberDAO {
 
 		try {
 			conn = ds.getConnection();
-			String sql = "update member set name = ?, age = ?, gender = ?, email = ? where id = ?";
+			String sql = "update member set name = ?, age = ?, gender = ?, email = ?, memberfile = ? where id = ? ";
 
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, m.getName());
 			pstmt.setInt(2, m.getAge());
 			pstmt.setString(3, m.getGender());
 			pstmt.setString(4, m.getEmail());
-			pstmt.setString(5, m.getId());
+			pstmt.setString(5, m.getMemberfile());
+			pstmt.setString(6, m.getId());
+
 
 			result = pstmt.executeUpdate();
 
@@ -224,7 +228,7 @@ public class MemberDAO {
 
 		return result;
 	}
-
+	
 	public List<Member> getList(int page, int limit) {
 
 		Connection conn = null;

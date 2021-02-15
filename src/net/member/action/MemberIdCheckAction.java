@@ -6,12 +6,17 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.membet.db.MemberDAO;
+
 public class MemberIdCheckAction implements Action {
 
 	@Override
 	public ActionForward execute(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
+		MemberDAO mdao = new MemberDAO();
+		int result = mdao.isId(request.getParameter("id"));
+		response.getWriter().append(Integer.toString(result));
+		System.out.println(result);
 		return null;
 	}
 
