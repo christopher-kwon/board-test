@@ -10,6 +10,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.comment.action.CommentAdd;
+import net.comment.action.CommentDelete;
+import net.comment.action.CommentList;
+import net.comment.action.CommentReply;
+import net.comment.action.CommentUpdate;
 import net.member.action.Action;
 import net.member.action.ActionForward;
 
@@ -69,6 +74,27 @@ public class BoardFrontController extends HttpServlet {
 		case "/BoardDeleteAction.bo" :
 			action = new BoardDeleteAction();
 			break;
+			
+		case "/CommentAdd.bo" :
+			action = new CommentAdd();
+			break;
+			
+		case "/CommentList.bo" :
+			action = new CommentList();
+			break;
+			
+		case "/CommentDelete.bo" :
+			action = new CommentDelete();
+			break;
+			
+		case "/CommentUpdate.bo" :
+			action = new CommentUpdate();
+			break;
+			
+		case "/CommentReply.bo" :
+			action = new CommentReply();
+			break;
+			
 			
 		case "/BoardFileDown.bo" :
 			action = new BoardFileDownAction();

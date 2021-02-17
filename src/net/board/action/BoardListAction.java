@@ -8,6 +8,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import net.board.db.BoardBean;
 import net.board.db.BoardDAO;
 import net.member.action.Action;
@@ -30,6 +34,11 @@ public class BoardListAction implements Action {
 		}
 
 		System.out.println("넘어온 페이지 = " + page);
+
+		// 추가
+		if (request.getParameter("limit") != null) {
+			limit = Integer.parseInt(request.getParameter("limit"));
+		}
 		System.out.println("넘어온 limit = " + limit);
 
 		// 총 리스트 수를 받아옵니다.
@@ -77,27 +86,59 @@ public class BoardListAction implements Action {
 		if (endpage > maxpage)
 			endpage = maxpage;
 
-		request.setAttribute("page", page); // 현재 페이지 수
-		request.setAttribute("maxpage", maxpage); // 최대 페이지 수
+		String state = request.getParameter("state");
 
-		// 현재 페이지에 표시할 첫 페이지 수
-		request.setAttribute("startpage", startpage);
+		if (state == null) {
+			System.out.println("state=null");
 
-		// 현재 페이지에 표시할 끝 페이지 수
-		request.setAttribute("endpage", endpage);
+			request.setAttribute("page", page); // 현재 페이지 수
+			request.setAttribute("maxpage", maxpage); // 최대 페이지 수
 
-		request.setAttribute("listcount", listcount); // 총 글의 수
+			// 현재 페이지에 표시할 첫 페이지 수
+			request.setAttribute("startpage", startpage);
 
-		// 해당 페이지의 글 목록을 갖고 있는 리스트
-		request.setAttribute("boardlist", boardlist);
-		request.setAttribute("limit", limit); //번호 부분
+			// 현재 페이지에 표시할 끝 페이지 수
+			request.setAttribute("endpage", endpage);
 
-		ActionForward forward = new ActionForward();
-		forward.setRedirect(false);
+			request.setAttribute("listcount", listcount); // 총 글의 수
 
-		// 글 목록 페이지로 이동하기 위해 경로를 설정합니다.
-		forward.setPath("board/참고/boardList.jsp");
-		return forward;
+			// 해당 페이지의 글 목록을 갖고 있는 리스트
+			request.setAttribute("boardlist", boardlist);
+			request.setAttribute("limit", limit); // 번호 부분
+
+			ActionForward forward = new ActionForward();
+			forward.setRedirect(false);
+
+			// 글 목록 페이지로 이동하기 위해 경로를 설정합니다.
+			forward.setPath("board/참고/boardList.jsp");
+			return forward;
+		} else {
+			System.out.println("state=ajax");
+			
+			//위에서 request로 담았던 것을 JsonObject에 담습니다.
+			JsonObject object = new JsonObject();
+			object.addProperty("page", page); //{"page" : 변수 page의 값} 형식으로 저장
+			object.addProperty("maxpage", maxpage);
+			object.addProperty("startpage", startpage);
+			object.addProperty("endpage", endpage);
+			object.addProperty("listcount", listcount);
+			object.addProperty("limit", limit);
+			
+			//JsonObject에 List 형식을 담을 수 있는 addProperty() 존재하지 않습니다.
+			//void com.google.gson.jsonObject.add(String property, JsonElement value)
+			//메서드를 통해서 저장합니다.
+			//List 형식을 JsonElement로 바꾸어 주어야 object에 저장할 수 있습니다.
+			//List => JsonElement
+			
+			JsonElement je = new Gson().toJsonTree(boardlist);
+			System.out.println("boardlist="+je.toString());
+			object.add("boardlist", je);
+			
+			response.setContentType("text/html;charset=utf-8");
+			response.getWriter().append(object.toString());
+			System.out.println(object.toString());
+			return null;
+		} //if end
 
 	} // execute end
 
